@@ -1,3 +1,64 @@
+# Node.js
 node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+pnpm-lock.yaml
 uploads/
+
+# Environment variables
 .env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+*.pid
+*.seed
+
+# VSCode & JetBrains
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# MongoDB data
+backend/data/
+*.wt
+*.ns
+*.log
+*.snappy
+*.gz
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyd
+*.so
+*.egg-info/
+venv/
+AI-server/venv/
+*.dll
+
+# React / frontend
+.cache/
+.parcel-cache/
+build/
+dist/
+.next/
+out/
+frontend/.env
+
+# Misc
+coverage/
+*.tgz
+*.tsbuildinfo
+.rpt2_cache/
+.rts2_cache_*/
+.eslintcache
+.stylelintcache
+.nyc_output/
