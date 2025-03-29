@@ -1,19 +1,63 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 
 const Navbar = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
+  const [role, setRole] = useState("");
+
+  useEffect(() => {
+    setIsLoggedIn(!!localStorage.getItem("token"));
+
+    // Fetch role from stored user data
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (user?.role) {
+      setRole(user.role);
+    }
+  }, [location]);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setIsLoggedIn(false);
+    navigate("/");
+  };
+
   return (
-    <nav className="bg-blue-600 text-white px-6 py-4 flex flex-wrap justify-between items-center w-full shadow-md z-10 fixed top-0 left-0">
-      <Link to="/" className="font-bold text-xl">
+    <nav className="fixed top-0 left-0 right-0 bg-white shadow z-50 px-6 py-4 flex justify-between items-center">
+      <Link to="/" className="text-xl font-bold text-blue-600">
         Missing Persons DB
       </Link>
-      <div className="flex flex-wrap gap-4">
-        <Link to="/" className="hover:underline">Home</Link>
-        <Link to="/alerts" className="hover:underline">Alerts</Link>
-        <Link to="/ai-search" className="hover:underline">AI Search</Link>
-        <Link to="/report" className="hover:underline">Report</Link>
-        <Link to="/login" className="hover:underline">Login</Link>
-        <Link to="/register" className="hover:underline">Register</Link>
+
+      <div className="space-x-4">
+        {isLoggedIn ? (
+          <>
+            {/* Role-based Dashboard Link */}
+            {role === "admin" ? (
+              <Link to="/admin/dashboard">Admin Dashboard</Link>
+            ) : (
+              <Link to="/user/dashboard">My Dashboard</Link>
+            )}
+
+            <Link to="/alerts">Alerts</Link>
+            <Link to="/ai-search">AI Search</Link>
+            <Link to="/report">Report</Link>
+            <Link to="/reports">View Reports</Link>
+            <button
+              onClick={handleLogout}
+              className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+            >
+              Logout
+            </button>
+          </>
+        ) : (
+          <>
+            <Link to="/login">Login</Link>
+            <Link to="/register">Register</Link>
+          </>
+        )}
       </div>
     </nav>
   );

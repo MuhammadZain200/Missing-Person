@@ -1,48 +1,53 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
+  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [error, setError] = useState("");
   const navigate = useNavigate();
-  const location = useLocation();
-  const from = location.state?.from?.pathname || "/";
-
-  const [form, setForm] = useState({ email: "", password: "" });
-  const [message, setMessage] = useState("");
 
   const handleChange = (e) => {
-    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+
     try {
-      const response = await axios.post("http://localhost:5000/login", form);
-      const { token, role } = response.data;
+      const response = await axios.post("http://localhost:5000/login", formData);
+      const { token, role, user } = response.data;
 
-      // Save token and user info
+      // ✅ Save user and token in local storage
       localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify({ email: form.email, role }));
+      localStorage.setItem("role", role);   
+      localStorage.setItem("user", JSON.stringify(user));
 
-      setMessage("✅ Login successful! Redirecting...");
-      setTimeout(() => navigate(from, { replace: true }), 1000);
+      // ✅ Redirect based on role
+      if (user.role === "admin") {
+        navigate("/admin/dashboard");
+      } else {
+        navigate("/user/dashboard");
+      }
     } catch (err) {
-      console.error(err);
-      setMessage("❌ Login failed. Check your credentials.");
+      console.error("Login error:", err.response?.data || err.message);
+      setError(err.response?.data?.error || "❌ Login failed. Please try again.");
     }
   };
 
   return (
-    <div className="max-w-md mx-auto p-6 bg-white rounded shadow">
-      <h2 className="text-xl font-bold mb-4">Login</h2>
-      {message && <p className="mb-4">{message}</p>}
+    <div className="max-w-md mx-auto p-6 bg-white rounded shadow mt-20">
+      <h2 className="text-2xl font-bold mb-4">Login</h2>
+
+      {error && <p className="text-red-600 mb-4">{error}</p>}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
           type="email"
           name="email"
           placeholder="Email"
-          value={form.email}
+          value={formData.email}
           onChange={handleChange}
           required
           className="w-full p-2 border rounded"
@@ -51,7 +56,7 @@ const Login = () => {
           type="password"
           name="password"
           placeholder="Password"
-          value={form.password}
+          value={formData.password}
           onChange={handleChange}
           required
           className="w-full p-2 border rounded"
@@ -63,13 +68,6 @@ const Login = () => {
           Login
         </button>
       </form>
-
-      <p className="text-sm text-center text-gray-600 mt-4">
-        Don’t have an account?{' '}
-        <a href="/register" className="text-blue-600 hover:underline">
-          Register here
-        </a>
-      </p>
     </div>
   );
 };

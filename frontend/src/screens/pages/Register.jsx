@@ -11,6 +11,7 @@ const Register = () => {
   });
 
   const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -18,21 +19,45 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // ✅ Client-side Validation
+    if (!form.name || !form.email || !form.password) {
+      setError("All fields are required.");
+      setMessage("");
+      return;
+    }
+
+    if (!/\S+@\S+\.\S+/.test(form.email)) {
+      setError("Please enter a valid email address.");
+      setMessage("");
+      return;
+    }
+
+    if (form.password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      setMessage("");
+      return;
+    }
+
     try {
-      // Don't send role — let backend default it
       await axios.post("http://localhost:5000/register", form);
       setMessage("✅ Registered successfully. Redirecting to login...");
+      setError("");
+
       setTimeout(() => navigate("/login"), 1500);
     } catch (err) {
       console.error(err);
-      setMessage("❌ Registration failed.");
+      setError("❌ Registration failed. Email may already be registered.");
+      setMessage("");
     }
   };
 
   return (
-    <div className="max-w-md mx-auto p-6 bg-white rounded shadow">
-      <h2 className="text-xl font-bold mb-4">Register</h2>
-      {message && <p className="mb-4">{message}</p>}
+    <div className="max-w-md mx-auto p-6 bg-white rounded shadow mt-10">
+      <h2 className="text-xl font-bold mb-4 text-center">Register</h2>
+
+      {error && <p className="mb-4 text-red-600">{error}</p>}
+      {message && <p className="mb-4 text-green-600">{message}</p>}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
@@ -41,7 +66,6 @@ const Register = () => {
           placeholder="Full Name"
           value={form.name}
           onChange={handleChange}
-          required
           className="w-full p-2 border rounded"
         />
         <input
@@ -50,7 +74,6 @@ const Register = () => {
           placeholder="Email"
           value={form.email}
           onChange={handleChange}
-          required
           className="w-full p-2 border rounded"
         />
         <input
@@ -59,7 +82,6 @@ const Register = () => {
           placeholder="Password"
           value={form.password}
           onChange={handleChange}
-          required
           className="w-full p-2 border rounded"
         />
 
@@ -72,7 +94,7 @@ const Register = () => {
       </form>
 
       <p className="text-sm text-center text-gray-600 mt-4">
-        Already have an account?{' '}
+        Already have an account?{" "}
         <a href="/login" className="text-blue-600 hover:underline">
           Login here
         </a>
