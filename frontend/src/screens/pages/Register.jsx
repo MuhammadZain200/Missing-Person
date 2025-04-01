@@ -20,7 +20,7 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // ✅ Client-side Validation
+    // Client-side Validation
     if (!form.name || !form.email || !form.password) {
       setError("All fields are required.");
       setMessage("");
@@ -41,13 +41,13 @@ const Register = () => {
 
     try {
       await axios.post("http://localhost:5000/register", form);
-      setMessage("✅ Registered successfully. Redirecting to login...");
+      setMessage("Registered successfully. Redirecting to login...");
       setError("");
 
       setTimeout(() => navigate("/login"), 1500);
     } catch (err) {
       console.error(err);
-      setError("❌ Registration failed. Email may already be registered.");
+      setError("Registration failed. Email may already be registered.");
       setMessage("");
     }
   };

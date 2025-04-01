@@ -19,12 +19,12 @@ const Login = () => {
       const response = await axios.post("http://localhost:5000/login", formData);
       const { token, role, user } = response.data;
 
-      // ✅ Save user and token in local storage
+      // Save user and token in local storage
       localStorage.setItem("token", token);
       localStorage.setItem("role", role);   
       localStorage.setItem("user", JSON.stringify(user));
 
-      // ✅ Redirect based on role
+      // Redirect based on role
       if (user.role === "admin") {
         navigate("/admin/dashboard");
       } else {
@@ -32,7 +32,7 @@ const Login = () => {
       }
     } catch (err) {
       console.error("Login error:", err.response?.data || err.message);
-      setError(err.response?.data?.error || "❌ Login failed. Please try again.");
+      setError(err.response?.data?.error || "Login failed. Please try again.");
     }
   };
 

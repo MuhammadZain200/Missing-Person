@@ -7,15 +7,14 @@ const ViewReports = () => {
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("All");
-  const [role, setRole] = useState(""); // ✅ track user role
+  const [role, setRole] = useState(""); // track user role
 
   useEffect(() => {
     const fetchReports = async () => {
       try {
         const token = localStorage.getItem("token");
-        const userRole = localStorage.getItem("role"); // ✅ fetch role
+        const userRole = localStorage.getItem("role"); // fetch role
         setRole(userRole);
-        console.log("👤 User role:", userRole); // ✅ Log here
 
         const response = await axios.get("http://localhost:5000/persons", {
           headers: {
@@ -52,7 +51,7 @@ const ViewReports = () => {
       );
     } catch (error) {
       console.error("Failed to update status:", error);
-      alert("❌ Failed to update status.");
+      alert("Failed to update status.");
     }
   };
 
@@ -133,7 +132,7 @@ const ViewReports = () => {
                 </span>
               </Link>
 
-              {/* ✅ SHOW DROPDOWN ONLY FOR ADMINS */}
+              {/* SHOW DROPDOWN ONLY FOR ADMINS */}
               {role === "admin" && (
                 <div className="mt-3">
                   <label className="text-sm font-medium">Update Status:</label>

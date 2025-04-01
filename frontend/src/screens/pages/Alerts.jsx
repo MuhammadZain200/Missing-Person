@@ -15,8 +15,8 @@ const Alerts = () => {
       });
       setAlerts(response.data);
     } catch (err) {
-      console.error("❌ Failed to fetch alerts:", err);
-      setError("❌ Failed to load alerts.");
+      console.error("Failed to fetch alerts:", err);
+      setError("Failed to load alerts.");
     }
   };
 
@@ -40,7 +40,7 @@ const Alerts = () => {
       // Re-fetch alerts to reflect updated status
       fetchAlerts();
     } catch (err) {
-      console.error("❌ Failed to mark as resolved:", err);
+      console.error("Failed to mark as resolved:", err);
       alert("Failed to mark as resolved.");
     }
   };

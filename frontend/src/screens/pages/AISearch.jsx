@@ -38,12 +38,12 @@ const AISearch = () => {
         }
       });
 
-      console.log("✅ Result from backend:", response.data);
+      console.log("Result from backend:", response.data);
       setResult(response.data);
-      setMessage("✅ Match result received.");
+      setMessage("Match result received.");
     } catch (err) {
       console.error(err);
-      setMessage("❌ Search failed. Try again.");
+      setMessage("Search failed. Try again.");
     }
   };
 
@@ -65,7 +65,7 @@ const AISearch = () => {
 
       {result && (
         <div className="mt-6">
-          <h3 className="font-semibold">🔍 Match Found:</h3>
+          <h3 className="font-semibold"> Match Found:</h3>
           <pre className="text-sm bg-gray-100 p-2 rounded">{JSON.stringify(result, null, 2)}</pre>
         </div>
       )}

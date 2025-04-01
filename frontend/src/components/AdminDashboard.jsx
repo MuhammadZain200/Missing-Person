@@ -41,39 +41,37 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">
-      <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
+      <h1 className="text-4xl font-extrabold text-center mb-10 text-blue-700">Admin Dashboard</h1>
 
-      {error && <p className="text-red-600 mb-4">{error}</p>}
+      {error && <p className="text-red-600 text-center mb-6">{error}</p>}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-        <div className="bg-white shadow rounded p-6 text-center">
+        <div className="bg-white shadow rounded p-6 text-center hover:shadow-md transition">
           <h2 className="text-lg font-semibold text-gray-700">Total Reports</h2>
-          <p className="text-3xl font-bold text-blue-600">{stats.totalReports}</p>
+          <p className="text-4xl font-bold text-blue-600 mt-2">{stats.totalReports}</p>
         </div>
-        <div className="bg-white shadow rounded p-6 text-center">
+        <div className="bg-white shadow rounded p-6 text-center hover:shadow-md transition">
           <h2 className="text-lg font-semibold text-gray-700">Missing Cases</h2>
-          <p className="text-3xl font-bold text-yellow-500">{stats.missingReports}</p>
+          <p className="text-4xl font-bold text-yellow-500 mt-2">{stats.missingReports}</p>
         </div>
-        <div className="bg-white shadow rounded p-6 text-center">
+        <div className="bg-white shadow rounded p-6 text-center hover:shadow-md transition">
           <h2 className="text-lg font-semibold text-gray-700">Resolved Cases</h2>
-          <p className="text-3xl font-bold text-green-600">{stats.resolvedReports}</p>
+          <p className="text-4xl font-bold text-green-600 mt-2">{stats.resolvedReports}</p>
         </div>
       </div>
 
       <div className="bg-white shadow rounded p-6">
-        <h2 className="text-xl font-semibold mb-4">Recent Reports</h2>
+        <h2 className="text-2xl font-semibold text-gray-800 mb-4">Recent Reports</h2>
         <ul className="divide-y divide-gray-200">
           {stats.recentReports.map((report) => (
-            <li key={report.id} className="py-2">
+            <li key={report.id} className="py-3">
               <div className="flex justify-between items-center">
-                <span className="font-medium text-gray-700">{report.name}</span>
-                <span className={`text-sm px-2 py-1 rounded-full font-semibold ${
-                  report.status === "Resolved"
-                    ? "bg-green-100 text-green-700"
-                    : "bg-yellow-100 text-yellow-700"
-                }`}>
-                  {report.status}
-                </span>
+                <span className="font-medium text-gray-700 text-lg">{report.name}</span>
+                <span className={`text-sm px-3 py-1 rounded-full font-semibold shadow-sm transition ${{
+                  'Resolved': "bg-green-100 text-green-700",
+                  'Missing': "bg-yellow-100 text-yellow-700",
+                  'Under Investigation': "bg-blue-100 text-blue-700"
+                }[report.status]}`}>{report.status}</span>
               </div>
               <p className="text-sm text-gray-500">Last Seen: {report.last_seen}</p>
             </li>
