@@ -9,33 +9,55 @@ const CaseDetails = () => {
   const [report, setReport] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
+
+  const fetchReport = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(`http://localhost:5000/persons/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (response.data && response.data.id) {
+        setReport(response.data);
+      } else {
+        setError("Report not found or invalid response.");
+      }
+    } catch (err) {
+      console.error("Failed to load report:", err);
+      setError("Failed to load report.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchReport = async () => {
-      try {
-        const token = localStorage.getItem("token");
+    fetchReport();
+  }, [id]);
 
-        const response = await axios.get(`http://localhost:5000/persons/${id}`, {
+  const handleStatusChange = async (e) => {
+    const newStatus = e.target.value;
+    setUpdating(true);
+    try {
+      const token = localStorage.getItem("token");
+      await axios.put(
+        `http://localhost:5000/persons/${id}/status`,
+        { status: newStatus },
+        {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        });
-
-        if (response.data && response.data.id) {
-          setReport(response.data);
-        } else {
-          setError("Report not found or invalid response.");
         }
-      } catch (err) {
-        console.error("Failed to load report:", err);
-        setError("Failed to load report.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchReport();
-  }, [id]);
+      );
+      await fetchReport();
+    } catch (err) {
+      console.error("Failed to update status:", err);
+      setError("Status update failed.");
+    } finally {
+      setUpdating(false);
+    }
+  };
 
   if (loading) return <p className="p-6">Loading report...</p>;
   if (error) return <p className="text-red-600 p-6">{error}</p>;
@@ -83,6 +105,23 @@ const CaseDetails = () => {
             {report.status}
           </span>
         </p>
+
+        {/* ⬇️ Only allow update for admin roles (replace this with real role check) */}
+        <div className="mt-2">
+          <label htmlFor="status" className="block text-sm font-medium">Update Status:</label>
+          <select
+            id="status"
+            className="mt-1 block w-full border p-2 rounded"
+            value={report.status}
+            onChange={handleStatusChange}
+            disabled={updating}
+          >
+            <option value="Missing">Missing</option>
+            <option value="Under Investigation">Under Investigation</option>
+            <option value="Resolved">Resolved</option>
+          </select>
+        </div>
+
         <p><strong>Last Seen:</strong> {report.last_seen || "Not provided"}</p>
         <p><strong>Date:</strong> {formattedDate}</p>
         <p><strong>Reported By:</strong> {report.reported_by_name || "Anonymous"}</p>
@@ -92,7 +131,6 @@ const CaseDetails = () => {
         )}
       </div>
 
-      {/* ✅ Show Leaflet Map if coordinates exist */}
       {report.last_seen_lat && report.last_seen_lng && (
         <div className="mt-6">
           <h3 className="text-lg font-semibold mb-2 text-gray-800">Location on Map</h3>
