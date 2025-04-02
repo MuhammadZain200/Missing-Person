@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
+import axios from "axios";                                                
 import MapLocation from "../../components/MapLocation";
 
 const CaseDetails = () => {
@@ -10,10 +10,14 @@ const CaseDetails = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [role, setRole] = useState(""); 
 
   const fetchReport = async () => {
     try {
       const token = localStorage.getItem("token");
+      const userRole = localStorage.getItem("role");
+      setRole(userRole); 
+
       const response = await axios.get(`http://localhost:5000/persons/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -47,6 +51,7 @@ const CaseDetails = () => {
         {
           headers: {
             Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
           },
         }
       );
@@ -106,21 +111,25 @@ const CaseDetails = () => {
           </span>
         </p>
 
-        {/* ⬇️ Only allow update for admin roles (replace this with real role check) */}
-        <div className="mt-2">
-          <label htmlFor="status" className="block text-sm font-medium">Update Status:</label>
-          <select
-            id="status"
-            className="mt-1 block w-full border p-2 rounded"
-            value={report.status}
-            onChange={handleStatusChange}
-            disabled={updating}
-          >
-            <option value="Missing">Missing</option>
-            <option value="Under Investigation">Under Investigation</option>
-            <option value="Resolved">Resolved</option>
-          </select>
-        </div>
+        {/* Only show this dropdown if user is admin */}
+        {role === "admin" && (
+          <div className="mt-2">
+            <label htmlFor="status" className="block text-sm font-medium">
+              Update Status:
+            </label>
+            <select
+              id="status"
+              className="mt-1 block w-full border p-2 rounded"
+              value={report.status}
+              onChange={handleStatusChange}
+              disabled={updating}
+            >
+              <option value="Missing">Missing</option>
+              <option value="Under Investigation">Under Investigation</option>
+              <option value="Resolved">Resolved</option>
+            </select>
+          </div>
+        )}
 
         <p><strong>Last Seen:</strong> {report.last_seen || "Not provided"}</p>
         <p><strong>Date:</strong> {formattedDate}</p>

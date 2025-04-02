@@ -1,26 +1,26 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
+import MiniMap from "../../components/MiniMap";
 
 const ViewReports = () => {
   const [reports, setReports] = useState([]);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("All");
-  const [role, setRole] = useState(""); // track user role
+  const [role, setRole] = useState("");
 
   useEffect(() => {
     const fetchReports = async () => {
       try {
         const token = localStorage.getItem("token");
-        const userRole = localStorage.getItem("role"); // fetch role
+        const userRole = localStorage.getItem("role");
         setRole(userRole);
 
         const response = await axios.get("http://localhost:5000/persons", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
+
         setReports(response.data);
       } catch (err) {
         console.error("Failed to fetch reports:", err);
@@ -34,24 +34,24 @@ const ViewReports = () => {
   const handleStatusChange = async (id, newStatus) => {
     try {
       const token = localStorage.getItem("token");
+
       await axios.put(
         `http://localhost:5000/persons/${id}/status`,
         { status: newStatus },
         {
           headers: {
             Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
           },
         }
       );
 
-      setReports((prevReports) =>
-        prevReports.map((r) =>
-          r.id === id ? { ...r, status: newStatus } : r
-        )
+      setReports((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, status: newStatus } : r))
       );
-    } catch (error) {
-      console.error("Failed to update status:", error);
-      alert("Failed to update status.");
+    } catch (err) {
+      console.error("Failed to update status:", err);
+      alert("❌ Failed to update status. Please try again.");
     }
   };
 
@@ -116,7 +116,18 @@ const ViewReports = () => {
 
                 <h3 className="text-xl font-semibold">{report.name}</h3>
                 <p className="text-gray-600 text-sm">Age: {report.age}</p>
-                <p className="text-gray-600 text-sm">Last Seen: {report.last_seen}</p>
+                <p className="text-gray-600 text-sm">
+                  Last Seen: {report.last_seen || "Unknown"}
+                </p>
+
+                {report.last_seen_lat && report.last_seen_lng && (
+                  <MiniMap
+                    lat={report.last_seen_lat}
+                    lng={report.last_seen_lng}
+                    label={report.last_seen}
+                  />
+                )}
+
                 <p className="text-gray-600 text-sm">Date: {report.date}</p>
 
                 <span
@@ -128,16 +139,15 @@ const ViewReports = () => {
                       : "bg-yellow-100 text-yellow-700"
                   }`}
                 >
-                  {report.status}
+                  {report.status || "Unknown"}
                 </span>
               </Link>
 
-              {/* SHOW DROPDOWN ONLY FOR ADMINS */}
               {role === "admin" && (
                 <div className="mt-3">
                   <label className="text-sm font-medium">Update Status:</label>
                   <select
-                    value={report.status}
+                    value={report.status || "Missing"}
                     onChange={(e) => handleStatusChange(report.id, e.target.value)}
                     className="w-full mt-1 p-2 border rounded"
                   >

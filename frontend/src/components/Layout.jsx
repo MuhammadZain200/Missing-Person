@@ -8,8 +8,8 @@ const Layout = () => {
   const hideNavbar = hideNavbarRoutes.includes(location.pathname);
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-800">
-      {!hideNavbar && <Navbar />}
+    <div className="min-h-screen bg-gray-50 text-gray-800">                               
+      {!hideNavbar && <Navbar />}                                             
       <main className="p-6 pt-24">
         <Outlet />
       </main>
@@ -18,3 +18,6 @@ const Layout = () => {
 };
 
 export default Layout;
+
+// Lauyout componets for the whole website
+//Hide NavigationBar when login /register tab is open. Shows NavigationBar to the rest fo the tab

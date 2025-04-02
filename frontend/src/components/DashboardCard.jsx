@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
-const DashboardCard = ({ title, count, icon, bgColor, to }) => {
+const DashboardCard = ({ title, count, icon, bgColor, to }) => {          
   return (
     <Link
       to={to}
@@ -17,3 +17,5 @@ const DashboardCard = ({ title, count, icon, bgColor, to }) => {
 };
 
 export default DashboardCard;
+
+//Reusable components for Dashboard metrics

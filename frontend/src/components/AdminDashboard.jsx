@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({
@@ -9,6 +10,7 @@ const AdminDashboard = () => {
     recentReports: [],
   });
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -20,8 +22,11 @@ const AdminDashboard = () => {
           },
         });
 
-        const allReports = response.data;
-        const resolved = allReports.filter((r) => r.status === "Resolved").length;
+        const allReports = response.data.sort(
+          (a, b) => new Date(b.updated_at || b.date) - new Date(a.updated_at || a.date)
+        );
+
+        const resolved = allReports.filter((r) => r.status === "Resolved").length;                      //Data retrieval from the API happens during the mount phase for the calculation of statistics which gets saved to state storage.
         const missing = allReports.filter((r) => r.status === "Missing").length;
 
         setStats({
@@ -58,22 +63,34 @@ const AdminDashboard = () => {
           <h2 className="text-lg font-semibold text-gray-700">Resolved Cases</h2>
           <p className="text-4xl font-bold text-green-600 mt-2">{stats.resolvedReports}</p>
         </div>
-      </div>
-
+      </div>                                                                                        
+                                                                                                              
       <div className="bg-white shadow rounded p-6">
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">Recent Reports</h2>
         <ul className="divide-y divide-gray-200">
           {stats.recentReports.map((report) => (
             <li key={report.id} className="py-3">
               <div className="flex justify-between items-center">
-                <span className="font-medium text-gray-700 text-lg">{report.name}</span>
-                <span className={`text-sm px-3 py-1 rounded-full font-semibold shadow-sm transition ${{
-                  'Resolved': "bg-green-100 text-green-700",
-                  'Missing': "bg-yellow-100 text-yellow-700",
-                  'Under Investigation': "bg-blue-100 text-blue-700"
-                }[report.status]}`}>{report.status}</span>
+                <span
+                  onClick={() => navigate(`/cases/${report.id}`)}
+                  className="font-medium text-gray-700 text-lg hover:underline cursor-pointer"
+                >
+                  {report.name}
+                </span>
+                <span
+                  className={`text-sm px-3 py-1 rounded-full font-semibold shadow-sm transition ${{
+                    Resolved: "bg-green-100 text-green-700",
+                    Missing: "bg-yellow-100 text-yellow-700",                                                   //Displays Recent reports, status and last seen info
+                    "Under Investigation": "bg-blue-100 text-blue-700",
+                  }[report.status]}`}
+                >
+                  {report.status}
+                </span>
               </div>
               <p className="text-sm text-gray-500">Last Seen: {report.last_seen}</p>
+              <p className="text-xs text-gray-400">
+                Updated: {new Date(report.updated_at || report.date).toLocaleString()}
+              </p>
             </li>
           ))}
         </ul>
