@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";                                                
+import axios from "axios";
 import MapLocation from "../../components/MapLocation";
 
 const CaseDetails = () => {
@@ -10,19 +10,26 @@ const CaseDetails = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
-  const [role, setRole] = useState(""); 
+  const [role, setRole] = useState("");
+  const [tips, setTips] = useState([]);
+  const [newTip, setNewTip] = useState("");
+  const [anonymous, setAnonymous] = useState(true);
+  const [evidence, setEvidence] = useState(null);
+  const [tipError, setTipError] = useState("");
+  const [tipMessage, setTipMessage] = useState("");
 
   const fetchReport = async () => {
     try {
       const token = localStorage.getItem("token");
       const userRole = localStorage.getItem("role");
-      setRole(userRole); 
+      setRole(userRole);
 
       const response = await axios.get(`http://localhost:5000/persons/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
+
       if (response.data && response.data.id) {
         setReport(response.data);
       } else {
@@ -36,8 +43,18 @@ const CaseDetails = () => {
     }
   };
 
+  const fetchTips = async () => {
+    try {
+      const response = await axios.get(`http://localhost:5000/tips/${id}`);
+      setTips(response.data);
+    } catch (err) {
+      console.error("Failed to fetch tips:", err);
+    }
+  };
+
   useEffect(() => {
     fetchReport();
+    fetchTips();
   }, [id]);
 
   const handleStatusChange = async (e) => {
@@ -63,6 +80,47 @@ const CaseDetails = () => {
       setUpdating(false);
     }
   };
+
+  const handleTipSubmit = async () => {
+    setTipError("");
+    setTipMessage("");
+  
+    if (newTip.trim().length < 3) {
+      setTipError("Tip must be at least 3 characters.");
+      return;
+    }
+  
+    try {
+      const token = localStorage.getItem("token");
+      const formData = new FormData();
+      formData.append("tip", newTip.trim()); // ✅ make sure it's trimmed
+      formData.append("anonymous", anonymous ? "yes" : "no"); // ✅ "yes"/"no"
+      if (evidence) {
+        formData.append("evidence", evidence); // ✅ optional file
+      }
+  
+      console.log("Sending Tip Data:");
+      console.log("tip:", newTip.trim());
+      console.log("anonymous:", anonymous);
+      console.log("evidence:", evidence);
+  
+      const response = await axios.post(`http://localhost:5000/tips/${id}`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+  
+      setNewTip("");
+      setEvidence(null);
+      setTipMessage("✅ Tip submitted!");
+      fetchTips();
+    } catch (err) {
+      console.error("Tip submission failed:", err.response?.data || err.message);
+      setTipError(`❌ ${err.response?.data?.error || "Failed to submit tip."}`);
+    }
+  };
+  
 
   if (loading) return <p className="p-6">Loading report...</p>;
   if (error) return <p className="text-red-600 p-6">{error}</p>;
@@ -93,9 +151,7 @@ const CaseDetails = () => {
       )}
 
       <div className="space-y-2 text-gray-700 text-sm">
-        <p>
-          <strong>Age:</strong> {report.age || "Not provided"}
-        </p>
+        <p><strong>Age:</strong> {report.age || "Not provided"}</p>
         <p>
           <strong>Status:</strong>{" "}
           <span
@@ -111,7 +167,6 @@ const CaseDetails = () => {
           </span>
         </p>
 
-        {/* Only show this dropdown if user is admin */}
         {role === "admin" && (
           <div className="mt-2">
             <label htmlFor="status" className="block text-sm font-medium">
@@ -120,7 +175,7 @@ const CaseDetails = () => {
             <select
               id="status"
               className="mt-1 block w-full border p-2 rounded"
-              value={report.status}
+              value={report.status || ""}
               onChange={handleStatusChange}
               disabled={updating}
             >
@@ -134,7 +189,6 @@ const CaseDetails = () => {
         <p><strong>Last Seen:</strong> {report.last_seen || "Not provided"}</p>
         <p><strong>Date:</strong> {formattedDate}</p>
         <p><strong>Reported By:</strong> {report.reported_by_name || "Anonymous"}</p>
-
         {report.additional_info && (
           <p><strong>Additional Info:</strong> {report.additional_info}</p>
         )}
@@ -150,6 +204,66 @@ const CaseDetails = () => {
           />
         </div>
       )}
+
+      <div className="mt-10">
+        <h3 className="text-xl font-bold mb-3">🕵️ Tip Line</h3>
+
+        <div className="space-y-2 mb-4">
+          <textarea
+            className="w-full p-2 border rounded"
+            rows="3"
+            placeholder="Submit a helpful tip or clue..."
+            value={newTip}
+            onChange={(e) => setNewTip(e.target.value)}
+          />
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="anonymous"
+              checked={anonymous}
+              onChange={(e) => setAnonymous(e.target.checked)}
+            />
+            <label htmlFor="anonymous" className="text-sm text-gray-700">Submit anonymously</label>
+          </div>
+
+          <input
+            type="file"
+            onChange={(e) => setEvidence(e.target.files[0])}
+            className="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:border file:rounded file:text-sm file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+          />
+
+          <button
+            onClick={handleTipSubmit}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          >
+            Submit Tip
+          </button>
+
+          {tipError && <p className="text-red-600 text-sm">{tipError}</p>}
+          {tipMessage && <p className="text-green-600 text-sm">{tipMessage}</p>}
+        </div>
+
+        {tips.length === 0 ? (
+          <p className="text-gray-600">No tips submitted yet.</p>
+        ) : (
+          <ul className="space-y-2">
+            {tips.map((tip) => (
+              <li key={tip.id} className="border p-3 rounded bg-gray-50">
+                <p className="text-sm text-gray-800">{tip.tip}</p>
+                {tip.evidence_url && (
+                  <p className="text-xs text-blue-600 mt-1">
+                    📎 <a href={`http://localhost:5000/${tip.evidence_url}`} target="_blank" rel="noreferrer">View Evidence</a>
+                  </p>
+                )}
+                <p className="text-xs text-gray-500 mt-1">
+                  — {tip.tipper || "Anonymous"}, {new Date(tip.created_at).toLocaleString()}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 };

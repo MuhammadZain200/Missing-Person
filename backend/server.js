@@ -3,21 +3,21 @@ const express = require("express");
 const cors = require("cors");
 const pool = require("./config/db");
 const jwt = require("jsonwebtoken");
-const bcrypt = require("bcryptjs");                         //Loaded dependicies
+const bcrypt = require("bcryptjs");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const aiRoutes = require("./routes/AIRoutes");
 const alertRoutes = require("./routes/alertRoutes");
+const tipRoutes = require("./routes/tipRoutes");
 
-const app = express();  //Express server being setup
+const app = express();
 
-
-app.use((req, res, next) => {             
+app.use((req, res, next) => {
   if (
     req.headers["content-type"] === "application/json" &&
     typeof req.body === "string"
-  ) {                                                                 //
+  ) {
     try {
       req.body = JSON.parse(req.body);
     } catch (e) {
@@ -27,11 +27,12 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.json()); // Main JSON parser
+app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // ✅ FIXED: Required for parsing form data
 app.use(cors());
 
 const bodyParser = require("body-parser");
-app.use(bodyParser.json()); // Explicit JSON body parser
+app.use(bodyParser.json());
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
@@ -40,7 +41,7 @@ const authenticateUser = (req, res, next) => {
   if (!token)
     return res.status(401).json({ error: "Access denied. No token provided." });
   try {
-    const decoded = jwt.verify(token.replace("Bearer ", ""), process.env.JWT_SECRET);               //JWT Authentication for Users
+    const decoded = jwt.verify(token.replace("Bearer ", ""), process.env.JWT_SECRET);
     req.user = decoded;
     next();
   } catch (err) {
@@ -50,14 +51,14 @@ const authenticateUser = (req, res, next) => {
 
 const authenticateAdmin = (req, res, next) => {
   authenticateUser(req, res, () => {
-    if (req.user.role !== "admin")                                                                              //JWT Authentication for Admins
+    if (req.user.role !== "admin")
       return res.status(403).json({ error: "Access denied. Admins only." });
     next();
   });
 };
 
 app.get("/", (req, res) => {
-  res.send("API is running...");                                        //Checks if API is working
+  res.send("API is running...");
 });
 
 app.post("/register", async (req, res) => {
@@ -71,7 +72,7 @@ app.post("/register", async (req, res) => {
       return res.status(400).json({ error: "Email already in use" });
 
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);                                               //Registers Users and stores them in the PostgreSQL
+    const hashedPassword = await bcrypt.hash(password, salt);
 
     const userRole = role || "user";
     const newUser = await pool.query(
@@ -95,7 +96,7 @@ app.post("/login", async (req, res) => {
     const user = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
     if (user.rows.length === 0) return res.status(401).json({ error: "Invalid credentials" });
 
-    const isValid = await bcrypt.compare(password, user.rows[0].password);                                  //Admins and User can Login uisng Email and Password
+    const isValid = await bcrypt.compare(password, user.rows[0].password);
     if (!isValid) return res.status(401).json({ error: "Invalid credentials" });
 
     const token = jwt.sign(
@@ -118,7 +119,7 @@ app.get("/persons", async (req, res) => {
       "SELECT persons.*, users.name AS reported_by_name FROM persons LEFT JOIN users ON persons.reported_by = users.user_id"
     );
     res.json(result.rows);
-  } catch (err) {                                                                 //Gets all the missing persons reported
+  } catch (err) {
     console.error("Fetch Error:", err.message);
     res.status(500).json({ error: "Server Error" });
   }
@@ -131,7 +132,7 @@ app.get("/persons/:id", async (req, res) => {
       "SELECT persons.*, users.name AS reported_by_name FROM persons LEFT JOIN users ON persons.reported_by = users.user_id WHERE persons.id = $1",
       [parseInt(id)]
     );
-    if (person.rows.length === 0) return res.status(404).json({ error: "Person not found" });                     //Gets specific case based on the user ID
+    if (person.rows.length === 0) return res.status(404).json({ error: "Person not found" });
     res.json(person.rows[0]);
   } catch (err) {
     console.error("Error fetching person:", err.message);
@@ -143,7 +144,7 @@ const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "uploads/"),
   filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
 });
-                                                                                          //Configure multer for image uploaded type 
+
 const upload = multer({
   storage,
   limits: { fileSize: 5 * 1024 * 1024 },
@@ -161,7 +162,7 @@ app.post("/persons", authenticateUser, upload.single("image"), async (req, res) 
     const { name, age, status, last_seen, date, additional_info, last_seen_lat, last_seen_lng } = req.body;
     const image = req.file ? req.file.filename : null;
 
-    if (!name || !age || !status || !last_seen || !date) {                                              //Reports a new case with Image (Optional)
+    if (!name || !age || !status || !last_seen || !date) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
@@ -192,7 +193,7 @@ app.delete("/persons/:id", authenticateAdmin, async (req, res) => {
     if (personExists.rows.length === 0) return res.status(404).json({ error: "Person not found" });
 
     await pool.query("DELETE FROM persons WHERE id = $1", [parseInt(id)]);
-    res.json({ message: "Person deleted successfully" });                                         //Deletes a report by ADMINS only
+    res.json({ message: "Person deleted successfully" });
   } catch (err) {
     console.error("Delete Error:", err.message);
     res.status(500).json({ error: "Server Error" });
@@ -209,7 +210,7 @@ app.put("/persons/:id/status", authenticateAdmin, async (req, res) => {
       return res.status(400).json({ error: "Status is required." });
     }
 
-    const person = await pool.query("SELECT status FROM persons WHERE id = $1", [parseInt(id)]);                    //Updates the cases status ADMINS ONLY
+    const person = await pool.query("SELECT status FROM persons WHERE id = $1", [parseInt(id)]);
     if (person.rows.length === 0) {
       return res.status(404).json({ error: "Person not found" });
     }
@@ -241,7 +242,7 @@ app.put("/users/:id/role", authenticateAdmin, async (req, res) => {
     const { id } = req.params;
     const { role } = req.body;
 
-    const validRoles = ["admin", "user", "police", "volunteer"];                  //Changes the accounr roles to admin,user,police or volunteer
+    const validRoles = ["admin", "user", "police", "volunteer"];
     if (!validRoles.includes(role))
       return res.status(400).json({ error: "Invalid role" });
 
@@ -260,10 +261,11 @@ app.put("/users/:id/role", authenticateAdmin, async (req, res) => {
   }
 });
 
-app.use("/", aiRoutes);                     //AI and Alert Routes
+app.use("/tips", tipRoutes);
+app.use("/", aiRoutes);
 app.use("/", alertRoutes);
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {                                                      //Tells us that the server is running on a specific port
+app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
