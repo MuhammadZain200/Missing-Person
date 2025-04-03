@@ -261,6 +261,30 @@ app.put("/users/:id/role", authenticateAdmin, async (req, res) => {
   }
 });
 
+app.get("/tip-stats", authenticateAdmin, async (req, res) => {
+  try {
+    const tipCounts = await pool.query(`
+      SELECT persons.id, persons.name, COUNT(tips.id) as tip_count
+      FROM persons
+      LEFT JOIN tips ON persons.id = tips.person_id
+      GROUP BY persons.id
+      ORDER BY tip_count DESC
+      LIMIT 5
+    `);
+
+    const totalTips = await pool.query("SELECT COUNT(*) FROM tips");
+
+    res.json({
+      totalTips: parseInt(totalTips.rows[0].count),
+      topTippedCases: tipCounts.rows,
+    });
+  } catch (err) {
+    console.error("Error fetching tip stats:", err.message);
+    res.status(500).json({ error: "Failed to fetch tip stats" });
+  }
+});
+
+
 app.use("/tips", tipRoutes);
 app.use("/", aiRoutes);
 app.use("/", alertRoutes);

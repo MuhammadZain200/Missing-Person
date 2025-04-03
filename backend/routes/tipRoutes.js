@@ -1,10 +1,10 @@
 const express = require("express");
 const tipRouter = express.Router();
-const pool = require("../config/db"); // Correct path to db.js
+const pool = require("../config/db");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
-const authenticateUser = require("../middleware/authMiddleware"); // Correct path to auth middleware
+const authenticateUser = require("../middleware/authMiddleware");
 
 // Setup Multer for evidence uploads
 const evidenceStorage = multer.diskStorage({
@@ -62,11 +62,6 @@ tipRouter.post("/:person_id", authenticateUser, upload.single("evidence"), async
     const tip = req.body.tip?.trim();
     const anonymous = req.body.anonymous;
 
-    console.log("📥 Tip:", tip);
-    console.log("🙈 Anonymous:", anonymous);
-    console.log("📎 Evidence File:", req.file);
-    console.log("👤 Authenticated User:", req.user);
-
     if (!tip || tip.length < 3) {
       return res.status(400).json({ error: "Tip must be at least 3 characters long." });
     }
@@ -79,6 +74,34 @@ tipRouter.post("/:person_id", authenticateUser, upload.single("evidence"), async
       "INSERT INTO tips (person_id, user_id, tip, evidence_url) VALUES ($1, $2, $3, $4) RETURNING *",
       [person_id, user_id, tip, evidenceUrl]
     );
+
+    // Find the reporter of the case to notify
+    const reporterQuery = await pool.query("SELECT reported_by FROM persons WHERE id = $1", [person_id]);
+    const reporterId = reporterQuery.rows[0]?.reported_by;
+
+    const alertMessageForAdmin = `🕵️ A new tip was submitted on case #${person_id}`;
+    const alertMessageForReporter = `Someone submitted a tip for your reported case.`;
+    const alertMessageForPolice = `🚨 A new tip was submitted for a case.`;
+
+    // Alert for Admins
+    await pool.query(
+      "INSERT INTO alerts (type, message, related_person_id, role_target) VALUES ($1, $2, $3, $4)",
+      ["tip", alertMessageForAdmin, person_id, "admin"]
+    );
+
+    // Alert for Police
+    await pool.query(
+      "INSERT INTO alerts (type, message, related_person_id, role_target) VALUES ($1, $2, $3, $4)",
+      ["tip", alertMessageForPolice, person_id, "police"]
+    );
+
+    // Alert for the original reporter (if available)
+    if (reporterId) {
+      await pool.query(
+        "INSERT INTO alerts (type, message, related_person_id, user_target) VALUES ($1, $2, $3, $4)",
+        ["tip", alertMessageForReporter, person_id, reporterId]
+      );
+    }
 
     res.status(201).json(result.rows[0]);
   } catch (err) {
