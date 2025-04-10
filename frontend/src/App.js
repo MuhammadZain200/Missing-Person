@@ -13,10 +13,13 @@ import PrivateRoute from "./components/PrivateRoute";
 import PublicRoute from "./components/PublicRoute";
 import AdminDashboard from "./components/AdminDashboard";
 import UserDashboard from "./components/UserDashboard";
+import PoliceDashboard from "./components/PoliceDashboard";
+import VolunteerDashboard from "./components/VolunteerDashboard";
+import ManageUsers from "./components/ManageUsers";
+import AdminRoute from "./components/AdminRoute";
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css';
 import 'leaflet-defaulticon-compatibility';
-
 
 import "./index.css";
 
@@ -95,10 +98,34 @@ function App() {
             }
           />
           <Route
+            path="/admin/users"
+            element={
+              <AdminRoute>
+                <ManageUsers />
+              </AdminRoute>
+            }
+          />
+          <Route
             path="/user/dashboard"
             element={
               <PrivateRoute>
                 <UserDashboard />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/police/dashboard"
+            element={
+              <PrivateRoute>
+                <PoliceDashboard />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/volunteer/dashboard"
+            element={
+              <PrivateRoute>
+                <VolunteerDashboard />
               </PrivateRoute>
             }
           />

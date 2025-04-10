@@ -61,12 +61,16 @@ const Navbar = () => {
             {/* Role-based Dashboard Link */}
             {role === "admin" ? (
               <Link to="/admin/dashboard">Admin Dashboard</Link>
+            ) : role === "police" ? (
+              <Link to="/police/dashboard">Police Dashboard</Link>
+            ) : role === "volunteer" ? (
+              <Link to="/volunteer/dashboard">Volunteer Dashboard</Link>
             ) : (
               <Link to="/user/dashboard">My Dashboard</Link>
             )}
 
             <Link to="/alerts" className="relative text-xl">
-              🔔
+              Alert
               {unseenCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                   {unseenCount}

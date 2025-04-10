@@ -69,6 +69,15 @@ const AdminDashboard = () => {
     <div className="min-h-screen bg-gray-100 p-8">
       <h1 className="text-4xl font-extrabold text-center mb-10 text-blue-700">Admin Dashboard</h1>
 
+      <div className="text-right mb-6">
+        <button
+          onClick={() => navigate("/admin/users")}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
+          Manage Accounts
+        </button>
+      </div>
+
       {error && <p className="text-red-600 text-center mb-6">{error}</p>}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
@@ -120,13 +129,19 @@ const AdminDashboard = () => {
       <div className="bg-white shadow rounded p-6">
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">🕵️ Tip Activity</h2>
         <p className="text-gray-700 mb-2">
-          Total Tips Submitted:{" "}
+          Total Tips Submitted: {" "}
           <span className="font-bold text-blue-600">{tipStats.totalTips}</span>
         </p>
         <ul className="space-y-2 mt-2">
           {tipStats.topTippedCases.map((t) => (
             <li key={t.id} className="text-sm text-gray-800">
-              <span className="font-medium">{t.name}</span> — {t.tip_count} tip(s)
+              <span
+                onClick={() => navigate(`/case/${t.id}`)}
+                className="font-medium hover:underline cursor-pointer"
+              >
+                {t.name}
+              </span>{" "}
+              — {t.tip_count} tip(s)
             </li>
           ))}
         </ul>

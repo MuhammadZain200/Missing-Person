@@ -17,18 +17,25 @@ const Login = () => {
 
     try {
       const response = await axios.post("http://localhost:5000/login", formData);
-      const { token, role, user } = response.data;
+      const { token, user } = response.data;
 
-      // Save user and token in local storage
+      // Save token and user to local storage
       localStorage.setItem("token", token);
-      localStorage.setItem("role", role);   
       localStorage.setItem("user", JSON.stringify(user));
 
-      // Redirect based on role
-      if (user.role === "admin") {
-        navigate("/admin/dashboard");
-      } else {
-        navigate("/user/dashboard");
+      // Role-based redirect
+      switch (user.role) {
+        case "admin":
+          navigate("/admin/dashboard");
+          break;
+        case "police":
+          navigate("/police/dashboard");
+          break;
+        case "volunteer":
+          navigate("/volunteer/dashboard");
+          break;
+        default:
+          navigate("/user/dashboard");
       }
     } catch (err) {
       console.error("Login error:", err.response?.data || err.message);

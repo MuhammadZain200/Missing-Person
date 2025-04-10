@@ -227,6 +227,16 @@ app.put("/persons/:id/status", authenticateAdmin, async (req, res) => {
       [status, parseInt(id)]
     );
 
+    await pool.query(
+      "INSERT INTO alerts (type, message, related_person_id) VALUES ($1, $2, $3)",
+      [
+        status.toLowerCase() === "resolved" ? "resolved" : "status",
+        `📢 Case status updated to ${status}`,
+        parseInt(id)
+      ]
+    );
+    
+
     res.json({
       message: "Status updated successfully",
       person: updatedPerson.rows[0]
@@ -283,6 +293,17 @@ app.get("/tip-stats", authenticateAdmin, async (req, res) => {
     res.status(500).json({ error: "Failed to fetch tip stats" });
   }
 });
+
+app.get("/users", authenticateAdmin, async (req, res) => {
+  try {
+    const result = await pool.query("SELECT user_id, name, email, role FROM users");
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error fetching users:", err.message);
+    res.status(500).json({ error: "Server Error" });
+  }
+});
+
 
 
 app.use("/tips", tipRoutes);

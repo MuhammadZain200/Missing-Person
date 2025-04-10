@@ -11,11 +11,14 @@ router.get("/alerts", authenticateToken, async (req, res) => {
 
   try {
     const result = await pool.query(
-      `SELECT * FROM alerts
+      `SELECT alerts.*, persons.name AS person_name
+       FROM alerts
+       LEFT JOIN persons ON alerts.related_person_id = persons.id
        WHERE role_target = $1 OR user_target = $2 OR (role_target IS NULL AND user_target IS NULL)
-       ORDER BY created_at DESC`,
+       ORDER BY alerts.created_at DESC`,
       [userRole, userId]
     );
+    
     res.json(result.rows);
   } catch (err) {
     console.error("Error fetching alerts:", err);

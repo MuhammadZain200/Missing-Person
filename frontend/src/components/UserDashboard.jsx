@@ -62,7 +62,7 @@ const UserDashboard = () => {
               <h3 className="text-xl font-semibold mb-1 text-gray-800">{report.name}</h3>
               <p className="text-sm text-gray-600">Age: {report.age}</p>
               <p className="text-sm text-gray-600">Last Seen: {report.last_seen}</p>
-              <p className="text-sm text-gray-600">Date: {report.date}</p>
+              <p className="text-sm text-gray-600">Date: {new Date(report.date).toLocaleDateString()}</p>
               <span
                 className={`inline-block mt-3 px-3 py-1 text-xs font-semibold rounded-full ${
                   report.status === "Resolved"
