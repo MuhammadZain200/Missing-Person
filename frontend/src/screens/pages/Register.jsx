@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -20,7 +20,6 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Client-side Validation
     if (!form.name || !form.email || !form.password) {
       setError("All fields are required.");
       setMessage("");
@@ -95,9 +94,9 @@ const Register = () => {
 
       <p className="text-sm text-center text-gray-600 mt-4">
         Already have an account?{" "}
-        <a href="/login" className="text-blue-600 hover:underline">
+        <Link to="/login" replace className="text-blue-600 hover:underline font-medium">
           Login here
-        </a>
+        </Link>
       </p>
     </div>
   );

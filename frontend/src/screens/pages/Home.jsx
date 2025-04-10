@@ -1,7 +1,39 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import axios from "axios";
 
 const Home = () => {
+  const [homepageStats, setHomepageStats] = useState({
+    reportsSubmitted: 0,
+    peopleFound: 0,
+    volunteersHelping: 0,
+  });
+
+  const [recentCases, setRecentCases] = useState([]);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/homepage-stats");
+        setHomepageStats(res.data);
+      } catch (err) {
+        console.error("Failed to fetch homepage stats:", err);
+      }
+    };
+
+    const fetchRecentCases = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/recent-cases");
+        setRecentCases(res.data);
+      } catch (err) {
+        console.error("Failed to fetch recent cases:", err);
+      }
+    };
+
+    fetchStats();
+    fetchRecentCases();
+  }, []);
+
   return (
     <div className="bg-gray-50 text-gray-800">
       {/* Hero Section */}
@@ -29,15 +61,21 @@ const Home = () => {
       {/* Stats Section */}
       <section className="py-16 px-6 md:px-16 grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
         <div>
-          <h2 className="text-4xl font-bold text-blue-600">120+</h2>
+          <h2 className="text-4xl font-bold text-blue-600">
+            {homepageStats.reportsSubmitted}+
+          </h2>
           <p className="text-gray-600 text-lg">Reports Submitted</p>
         </div>
         <div>
-          <h2 className="text-4xl font-bold text-blue-600">45</h2>
+          <h2 className="text-4xl font-bold text-blue-600">
+            {homepageStats.peopleFound}
+          </h2>
           <p className="text-gray-600 text-lg">People Found</p>
         </div>
         <div>
-          <h2 className="text-4xl font-bold text-blue-600">8</h2>
+          <h2 className="text-4xl font-bold text-blue-600">
+            {homepageStats.volunteersHelping}
+          </h2>
           <p className="text-gray-600 text-lg">Volunteers Helping</p>
         </div>
       </section>
@@ -59,17 +97,29 @@ const Home = () => {
       <section className="py-20 px-6 md:px-16">
         <h2 className="text-3xl font-bold mb-10 text-center">Recent Missing Person Cases</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-          {[
-            { name: "John Doe", location: "New York City" },
-            { name: "Jane Smith", location: "Los Angeles" },
-            { name: "Carlos Ruiz", location: "Miami" },
-          ].map((person, index) => (
-            <div key={index} className="bg-white rounded shadow-md hover:shadow-xl transition p-5">
-              <div className="bg-gray-200 h-40 mb-4 rounded" />
-              <h3 className="font-semibold text-lg">{person.name}</h3>
-              <p className="text-sm text-gray-500">Last seen: {person.location}</p>
-            </div>
-          ))}
+          {recentCases.length === 0 ? (
+            <p className="text-center text-gray-500 col-span-full">No recent cases available.</p>
+          ) : (
+            recentCases.map((person) => (
+              <Link
+                to={`/case/${person.id}`}
+                key={person.id}
+                className="bg-white rounded shadow-md hover:shadow-xl transition p-5 block"
+              >
+                {person.image ? (
+                  <img
+                    src={`http://localhost:5000/uploads/${person.image}`}
+                    alt={person.name}
+                    className="w-full h-40 object-cover rounded mb-4"
+                  />
+                ) : (
+                  <div className="bg-gray-200 h-40 mb-4 rounded" />
+                )}
+                <h3 className="font-semibold text-lg">{person.name}</h3>
+                <p className="text-sm text-gray-500">Last seen: {person.last_seen}</p>
+              </Link>
+            ))
+          )}
         </div>
       </section>
 

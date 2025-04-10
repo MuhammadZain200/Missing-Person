@@ -21,7 +21,8 @@ const CaseDetails = () => {
   const fetchReport = async () => {
     try {
       const token = localStorage.getItem("token");
-      const userRole = localStorage.getItem("role");
+      const user = JSON.parse(localStorage.getItem("user"));
+      const userRole = user?.role;
       setRole(userRole);
 
       const response = await axios.get(`http://localhost:5000/persons/${id}`, {
@@ -84,33 +85,28 @@ const CaseDetails = () => {
   const handleTipSubmit = async () => {
     setTipError("");
     setTipMessage("");
-  
+
     if (newTip.trim().length < 3) {
       setTipError("Tip must be at least 3 characters.");
       return;
     }
-  
+
     try {
       const token = localStorage.getItem("token");
       const formData = new FormData();
-      formData.append("tip", newTip.trim()); // ✅ make sure it's trimmed
-      formData.append("anonymous", anonymous ? "yes" : "no"); // ✅ "yes"/"no"
+      formData.append("tip", newTip.trim());
+      formData.append("anonymous", anonymous ? "yes" : "no");
       if (evidence) {
-        formData.append("evidence", evidence); // ✅ optional file
+        formData.append("evidence", evidence);
       }
-  
-      console.log("Sending Tip Data:");
-      console.log("tip:", newTip.trim());
-      console.log("anonymous:", anonymous);
-      console.log("evidence:", evidence);
-  
-      const response = await axios.post(`http://localhost:5000/tips/${id}`, formData, {
+
+      await axios.post(`http://localhost:5000/tips/${id}`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",
         },
       });
-  
+
       setNewTip("");
       setEvidence(null);
       setTipMessage("✅ Tip submitted!");
@@ -120,7 +116,6 @@ const CaseDetails = () => {
       setTipError(`❌ ${err.response?.data?.error || "Failed to submit tip."}`);
     }
   };
-  
 
   if (loading) return <p className="p-6">Loading report...</p>;
   if (error) return <p className="text-red-600 p-6">{error}</p>;

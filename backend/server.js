@@ -304,6 +304,55 @@ app.get("/users", authenticateAdmin, async (req, res) => {
   }
 });
 
+app.get("/homepage-stats", async (req, res) => {
+  try {
+    const totalReports = await pool.query("SELECT COUNT(*) FROM persons");
+    const foundPeople = await pool.query("SELECT COUNT(*) FROM persons WHERE status = 'Resolved'");
+    const volunteers = await pool.query("SELECT COUNT(*) FROM users WHERE role = 'volunteer'");
+
+    res.json({
+      reportsSubmitted: parseInt(totalReports.rows[0].count),
+      peopleFound: parseInt(foundPeople.rows[0].count),
+      volunteersHelping: parseInt(volunteers.rows[0].count),
+    });
+  } catch (err) {
+    console.error("Error fetching homepage stats:", err);
+    res.status(500).json({ error: "Failed to fetch homepage stats" });
+  }
+});
+
+
+app.get("/recent-cases", async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, name, last_seen, image 
+       FROM persons 
+       ORDER BY updated_at DESC NULLS LAST, date DESC 
+       LIMIT 3`
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error fetching recent cases:", err.message);
+    res.status(500).json({ error: "Server Error" });
+  }
+});
+
+
+app.get("/homepage-recent-cases", async (req, res) => {
+  try {
+    const recent = await pool.query(`
+      SELECT id, name, last_seen, date, image
+      FROM persons
+      ORDER BY date DESC
+      LIMIT 6
+    `);
+    res.json(recent.rows);
+  } catch (err) {
+    console.error("Error fetching recent cases:", err.message);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 
 
 app.use("/tips", tipRoutes);

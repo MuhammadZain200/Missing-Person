@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom"; // ✅ Import Link
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -19,11 +19,9 @@ const Login = () => {
       const response = await axios.post("http://localhost:5000/login", formData);
       const { token, user } = response.data;
 
-      // Save token and user to local storage
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
 
-      // Role-based redirect
       switch (user.role) {
         case "admin":
           navigate("/admin/dashboard");
@@ -75,6 +73,14 @@ const Login = () => {
           Login
         </button>
       </form>
+
+      {/* ✅ Link to Register */}
+      <p className="mt-4 text-center text-sm text-gray-600">
+        Don&apos;t have an account?{" "}
+        <Link to="/register" replace className="text-blue-600 hover:underline font-medium">
+          Register here
+        </Link>
+      </p>
     </div>
   );
 };
