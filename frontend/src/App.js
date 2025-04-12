@@ -17,9 +17,12 @@ import PoliceDashboard from "./components/PoliceDashboard";
 import VolunteerDashboard from "./components/VolunteerDashboard";
 import ManageUsers from "./components/ManageUsers";
 import AdminRoute from "./components/AdminRoute";
-import 'leaflet/dist/leaflet.css';
-import 'leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css';
-import 'leaflet-defaulticon-compatibility';
+import OTPVerification from "./components/OTPVerification";
+import Profile from "./screens/pages/Profile"; // ✅ NEW: Import Profile
+
+import "leaflet/dist/leaflet.css";
+import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css";
+import "leaflet-defaulticon-compatibility";
 
 import "./index.css";
 
@@ -44,11 +47,18 @@ function App() {
             </PublicRoute>
           }
         />
+        <Route
+          path="/verify-otp"
+          element={
+            <PublicRoute>
+              <OTPVerification />
+            </PublicRoute>
+          }
+        />
 
         {/* Protected Routes with Navbar and Layout */}
         <Route element={<Layout />}>
           <Route path="/" element={<Home />} />
-
           <Route
             path="/case/:id"
             element={
@@ -126,6 +136,14 @@ function App() {
             element={
               <PrivateRoute>
                 <VolunteerDashboard />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/profile" // ✅ NEW: Profile route
+            element={
+              <PrivateRoute>
+                <Profile />
               </PrivateRoute>
             }
           />

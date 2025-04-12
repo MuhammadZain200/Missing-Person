@@ -81,6 +81,12 @@ const Navbar = () => {
             <Link to="/ai-search">AI Search</Link>
             <Link to="/report">Report</Link>
             <Link to="/reports">View Reports</Link>
+
+            {/* ✅ New: My Profile Link */}
+            <Link to="/profile" className="font-medium hover:underline">
+              My Profile
+            </Link>
+
             <button
               onClick={handleLogout}
               className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"

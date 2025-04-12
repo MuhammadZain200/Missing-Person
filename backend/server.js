@@ -10,6 +10,11 @@ const fs = require("fs");
 const aiRoutes = require("./routes/AIRoutes");
 const alertRoutes = require("./routes/alertRoutes");
 const tipRoutes = require("./routes/tipRoutes");
+const otpStore = new Map(); // key: email, value: { otp, expiresAt }
+const nodemailer = require("nodemailer");
+require("dotenv").config();
+
+
 
 const app = express();
 
@@ -352,6 +357,123 @@ app.get("/homepage-recent-cases", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+
+app.put("/profile", authenticateUser, async (req, res) => {
+  try {
+    const userId = req.user.user_id;
+    const { name, email, password } = req.body;
+
+    let query = "UPDATE users SET name = $1, email = $2";
+    let values = [name, email];
+    
+    if (password) {
+      const salt = await bcrypt.genSalt(10);
+      const hashed = await bcrypt.hash(password, salt);
+      query += ", password = $3 WHERE user_id = $4 RETURNING user_id, name, email, role";
+      values.push(hashed, userId);
+    } else {
+      query += " WHERE user_id = $3 RETURNING user_id, name, email, role";
+      values.push(userId);
+    }
+
+    const updated = await pool.query(query, values);
+    res.json({ message: "Profile updated", user: updated.rows[0] });
+  } catch (err) {
+    console.error("Profile update error:", err.message);
+    res.status(500).json({ error: "Failed to update profile" });
+  }
+});
+
+
+const sendOTPEmail = require("./utils/sendOTPEmail");
+
+app.post("/send-otp", async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: "Email is required" });
+
+  const otp = Math.floor(100000 + Math.random() * 900000); // 6-digit OTP
+  const expiresAt = Date.now() + 5 * 60 * 1000; // expires in 5 min
+
+  try {
+    await sendOTPEmail(email, otp);
+    otpStore.set(email, { otp, expiresAt });
+    res.json({ message: "OTP sent to email" });
+  } catch (err) {
+    console.error("Failed to send OTP:", err);
+    res.status(500).json({ error: "Failed to send OTP" });
+  }
+});
+
+app.post("/verify-otp", (req, res) => {
+  const { email, otp } = req.body;
+  const record = otpStore.get(email);
+
+  if (!record) return res.status(400).json({ error: "No OTP found for this email" });
+  if (Date.now() > record.expiresAt) return res.status(400).json({ error: "OTP expired" });
+  if (record.otp.toString() !== otp.toString()) return res.status(400).json({ error: "Invalid OTP" });
+
+  otpStore.delete(email); // ✅ Clear after successful verification
+  res.json({ message: "OTP verified successfully" });
+});
+
+
+// Store OTPs temporarily in-memory
+const loginOtps = {};
+
+app.post("/send-login-otp", async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: "Email is required." });
+
+  const user = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
+  if (user.rows.length === 0) return res.status(404).json({ error: "User not found." });
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  loginOtps[email] = otp;
+
+  // Setup Nodemailer (reuse your existing transporter)
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS
+    }
+  });
+
+  await transporter.sendMail({
+    from: `"Missing Persons DB" <${process.env.EMAIL_USER}>`,
+    to: email,
+    subject: "🔐 Login OTP Verification",
+    text: `Your OTP is: ${otp}`
+  });
+
+  res.json({ message: "OTP sent to email." });
+});
+
+app.post("/verify-login-otp", async (req, res) => {
+  const { email, otp } = req.body;
+  if (!otp || !email) return res.status(400).json({ error: "Missing email or OTP." });
+
+  if (loginOtps[email] !== otp) return res.status(400).json({ error: "Invalid OTP." });
+
+  // Cleanup OTP after successful verification
+  delete loginOtps[email];
+
+  const user = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
+  const { user_id, name, role } = user.rows[0];
+
+  const token = jwt.sign({ user_id, role }, process.env.JWT_SECRET, { expiresIn: "1h" });
+
+  res.json({ token, user: { user_id, name, email, role }, role });
+});
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
 
 
 

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { useNavigate, Link } from "react-router-dom"; // ✅ Import Link
+import { useNavigate, Link } from "react-router-dom";
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -16,25 +16,19 @@ const Login = () => {
     setError("");
 
     try {
-      const response = await axios.post("http://localhost:5000/login", formData);
-      const { token, user } = response.data;
+      // Step 1: Verify credentials
+      const res = await axios.post("http://localhost:5000/login", formData);
+      const { user } = res.data;
 
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
+      // Step 2: Save user and email temporarily
+      localStorage.setItem("pendingUser", JSON.stringify(user));
+      localStorage.setItem("pendingEmail", formData.email);
 
-      switch (user.role) {
-        case "admin":
-          navigate("/admin/dashboard");
-          break;
-        case "police":
-          navigate("/police/dashboard");
-          break;
-        case "volunteer":
-          navigate("/volunteer/dashboard");
-          break;
-        default:
-          navigate("/user/dashboard");
-      }
+      // Step 3: Send OTP to the user's email
+      await axios.post("http://localhost:5000/send-login-otp", { email: formData.email });
+
+      // Step 4: Navigate to OTP verification page
+      navigate("/verify-otp");
     } catch (err) {
       console.error("Login error:", err.response?.data || err.message);
       setError(err.response?.data?.error || "Login failed. Please try again.");
@@ -74,7 +68,6 @@ const Login = () => {
         </button>
       </form>
 
-      {/* ✅ Link to Register */}
       <p className="mt-4 text-center text-sm text-gray-600">
         Don&apos;t have an account?{" "}
         <Link to="/register" replace className="text-blue-600 hover:underline font-medium">
