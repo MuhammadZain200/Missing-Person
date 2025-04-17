@@ -1,3 +1,10 @@
+//AdminDashboard.jsx
+// Displays stats and recent cases activity 
+//Lists 5 recent cases with statis and last seen info
+//Allows to manage accounts and case details
+//Shows stats for total tips written 
+
+
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -65,6 +72,30 @@ const AdminDashboard = () => {
     fetchTipStats();
   }, []);
 
+  const handleDelete = async (id, name) => {
+    const confirmDelete = window.confirm(`Are you sure you want to delete the case for ${name}?`);
+    if (!confirmDelete) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(`http://localhost:5000/persons/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const updatedReports = stats.recentReports.filter((r) => r.id !== id);
+      setStats((prev) => ({
+        ...prev,
+        recentReports: updatedReports,
+        totalReports: prev.totalReports - 1,
+      }));
+    } catch (err) {
+      console.error("Delete error:", err);
+      alert("Failed to delete the case.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <h1 className="text-4xl font-extrabold text-center mb-10 text-blue-700">Admin Dashboard</h1>
@@ -100,22 +131,30 @@ const AdminDashboard = () => {
         <ul className="divide-y divide-gray-200">
           {stats.recentReports.map((report) => (
             <li key={report.id} className="py-3">
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center gap-4 flex-wrap">
                 <span
                   onClick={() => navigate(`/case/${report.id}`)}
                   className="font-medium text-gray-700 text-lg hover:underline cursor-pointer"
                 >
                   {report.name}
                 </span>
-                <span
-                  className={`text-sm px-3 py-1 rounded-full font-semibold shadow-sm transition ${{
-                    Resolved: "bg-green-100 text-green-700",
-                    Missing: "bg-yellow-100 text-yellow-700",
-                    "Under Investigation": "bg-blue-100 text-blue-700",
-                  }[report.status]}`}
-                >
-                  {report.status}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`text-sm px-3 py-1 rounded-full font-semibold shadow-sm transition ${{
+                      Resolved: "bg-green-100 text-green-700",
+                      Missing: "bg-yellow-100 text-yellow-700",
+                      "Under Investigation": "bg-blue-100 text-blue-700",
+                    }[report.status]}`}
+                  >
+                    {report.status}
+                  </span>
+                  <button
+                    onClick={() => handleDelete(report.id, report.name)}
+                    className="text-xs px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
               <p className="text-sm text-gray-500">Last Seen: {report.last_seen}</p>
               <p className="text-xs text-gray-400">
@@ -129,7 +168,7 @@ const AdminDashboard = () => {
       <div className="bg-white shadow rounded p-6">
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">🕵️ Tip Activity</h2>
         <p className="text-gray-700 mb-2">
-          Total Tips Submitted: {" "}
+          Total Tips Submitted:{" "}
           <span className="font-bold text-blue-600">{tipStats.totalTips}</span>
         </p>
         <ul className="space-y-2 mt-2">

@@ -1,3 +1,5 @@
+// Displays login users to their submitted missing person reports
+
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
@@ -13,7 +15,7 @@ const UserDashboard = () => {
       const user = JSON.parse(localStorage.getItem("user"));
 
       if (!user) {
-        setError("⚠️ User not found in local storage.");
+        setError("User not found in local storage.");
         setLoading(false);
         return;
       }
@@ -32,7 +34,7 @@ const UserDashboard = () => {
         setReports(userReports);
       } catch (err) {
         console.error("Error loading user reports:", err);
-        setError("❌ Failed to load your reports.");
+        setError("Failed to load your reports.");
       } finally {
         setLoading(false);
       }

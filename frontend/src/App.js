@@ -18,7 +18,7 @@ import VolunteerDashboard from "./components/VolunteerDashboard";
 import ManageUsers from "./components/ManageUsers";
 import AdminRoute from "./components/AdminRoute";
 import OTPVerification from "./components/OTPVerification";
-import Profile from "./screens/pages/Profile"; // ✅ NEW: Import Profile
+import Profile from "./screens/pages/Profile"; // 
 
 import "leaflet/dist/leaflet.css";
 import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css";
@@ -140,7 +140,7 @@ function App() {
             }
           />
           <Route
-            path="/profile" // ✅ NEW: Profile route
+            path="/profile" // 
             element={
               <PrivateRoute>
                 <Profile />

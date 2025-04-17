@@ -10,13 +10,14 @@ const fs = require("fs");
 const aiRoutes = require("./routes/AIRoutes");
 const alertRoutes = require("./routes/alertRoutes");
 const tipRoutes = require("./routes/tipRoutes");
-const otpStore = new Map(); // key: email, value: { otp, expiresAt }
+const otpStore = new Map(); 
 const nodemailer = require("nodemailer");
+const sendCaseNotification = require("./utils/sendCaseNotification");
 require("dotenv").config();
 
 
 
-const app = express();
+const app = express();         //Express server being setup
 
 app.use((req, res, next) => {
   if (
@@ -33,19 +34,19 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: true })); // ✅ FIXED: Required for parsing form data
+app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
 const bodyParser = require("body-parser");
 app.use(bodyParser.json());
 
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));          //Upload images
 
 const authenticateUser = (req, res, next) => {
   const token = req.header("Authorization");
   if (!token)
     return res.status(401).json({ error: "Access denied. No token provided." });
-  try {
+  try {                                                                                     //Verfies if users token is valid using JKWT Token
     const decoded = jwt.verify(token.replace("Bearer ", ""), process.env.JWT_SECRET);
     req.user = decoded;
     next();
@@ -57,16 +58,16 @@ const authenticateUser = (req, res, next) => {
 const authenticateAdmin = (req, res, next) => {
   authenticateUser(req, res, () => {
     if (req.user.role !== "admin")
-      return res.status(403).json({ error: "Access denied. Admins only." });
+      return res.status(403).json({ error: "Access denied. Admins only." });                      //Verfies if admins token is valid using JKWT Token
     next();
   });
 };
 
 app.get("/", (req, res) => {
-  res.send("API is running...");
+  res.send("API is running...");                //Confimrs if the server is working
 });
 
-app.post("/register", async (req, res) => {
+app.post("/register", async (req, res) => {                             //Registration for users using email, name, and password.
   try {
     const { name, email, password, role } = req.body;
     if (!name || !email || !password)
@@ -77,22 +78,22 @@ app.post("/register", async (req, res) => {
       return res.status(400).json({ error: "Email already in use" });
 
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const hashedPassword = await bcrypt.hash(password, salt);             //Encrypt the users password to has for security reasons
 
     const userRole = role || "user";
     const newUser = await pool.query(
-      "INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4) RETURNING *",
+      "INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4) RETURNING *",    //Inserts the information to the databse
       [name, email, hashedPassword, userRole]
     );
 
     res.status(201).json({ message: "User registered successfully", user: newUser.rows[0] });
-  } catch (err) {
+  } catch (err) {                                                   //Sends message to user thay account has been registered.
     console.error("Register Error:", err.message);
     res.status(500).json({ error: "Server Error" });
   }
 });
 
-app.post("/login", async (req, res) => {
+app.post("/login", async (req, res) => {             //login routes using email and password.
   try {
     const { email, password } = req.body;
     if (!email || !password)
@@ -107,7 +108,7 @@ app.post("/login", async (req, res) => {
     const token = jwt.sign(
       { user_id: user.rows[0].user_id, role: user.rows[0].role },
       process.env.JWT_SECRET,
-      { expiresIn: "1h" }
+      { expiresIn: "1h" }                                   //Authenticate the user and issue a JWT which expires in 1 hour.
     );
 
     const { user_id, name, email: userEmail, role } = user.rows[0];
@@ -118,19 +119,19 @@ app.post("/login", async (req, res) => {
   }
 });
 
-app.get("/persons", async (req, res) => {
+app.get("/persons", async (req, res) => {                     //Fetches all the missing reports
   try {
     const result = await pool.query(
       "SELECT persons.*, users.name AS reported_by_name FROM persons LEFT JOIN users ON persons.reported_by = users.user_id"
     );
-    res.json(result.rows);
+    res.json(result.rows);                                  //Retrivies all the reports by the missing persons 
   } catch (err) {
     console.error("Fetch Error:", err.message);
     res.status(500).json({ error: "Server Error" });
   }
 });
 
-app.get("/persons/:id", async (req, res) => {
+app.get("/persons/:id", async (req, res) => {             //Fetches all the missing reports by their ID
   try {
     const { id } = req.params;
     const person = await pool.query(
@@ -138,7 +139,7 @@ app.get("/persons/:id", async (req, res) => {
       [parseInt(id)]
     );
     if (person.rows.length === 0) return res.status(404).json({ error: "Person not found" });
-    res.json(person.rows[0]);
+    res.json(person.rows[0]);                                                   //Retrivies all the reports by the missing persons ID
   } catch (err) {
     console.error("Error fetching person:", err.message);
     res.status(500).json({ error: "Server Error" });
@@ -162,7 +163,7 @@ const upload = multer({
   }
 });
 
-app.post("/persons", authenticateUser, upload.single("image"), async (req, res) => {
+app.post("/persons", authenticateUser, upload.single("image"), async (req, res) => {                         //Add a new missing person to the databse
   try {
     const { name, age, status, last_seen, date, additional_info, last_seen_lat, last_seen_lng } = req.body;
     const image = req.file ? req.file.filename : null;
@@ -191,7 +192,7 @@ app.post("/persons", authenticateUser, upload.single("image"), async (req, res) 
   }
 });
 
-app.delete("/persons/:id", authenticateAdmin, async (req, res) => {
+app.delete("/persons/:id", authenticateAdmin, async (req, res) => {                             //Admins ONLY cant delete cases
   try {
     const { id } = req.params;
     const personExists = await pool.query("SELECT * FROM persons WHERE id = $1", [parseInt(id)]);
@@ -205,7 +206,7 @@ app.delete("/persons/:id", authenticateAdmin, async (req, res) => {
   }
 });
 
-app.put("/persons/:id/status", authenticateAdmin, async (req, res) => {
+app.put("/persons/:id/status", authenticateAdmin, async (req, res) => {           //Admins can update case status
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -240,6 +241,16 @@ app.put("/persons/:id/status", authenticateAdmin, async (req, res) => {
         parseInt(id)
       ]
     );
+
+    const sendCaseNotification = require("./utils/sendCaseNotification");
+
+    await sendCaseNotification({
+      personId: parseInt(id),
+      caseName: updatedPerson.rows[0].name,
+      updateType: "status",
+      detail: `The case status has been updated to "${status}".`
+    });
+
     
 
     res.json({
@@ -252,7 +263,7 @@ app.put("/persons/:id/status", authenticateAdmin, async (req, res) => {
   }
 });
 
-app.put("/users/:id/role", authenticateAdmin, async (req, res) => {
+app.put("/users/:id/role", authenticateAdmin, async (req, res) => {           //Admins can change roles in every account
   try {
     const { id } = req.params;
     const { role } = req.body;
@@ -276,7 +287,7 @@ app.put("/users/:id/role", authenticateAdmin, async (req, res) => {
   }
 });
 
-app.get("/tip-stats", authenticateAdmin, async (req, res) => {
+app.get("/tip-stats", authenticateAdmin, async (req, res) => {            //Admins have Tip Stats to see how many tips have been submitted
   try {
     const tipCounts = await pool.query(`
       SELECT persons.id, persons.name, COUNT(tips.id) as tip_count
@@ -299,7 +310,7 @@ app.get("/tip-stats", authenticateAdmin, async (req, res) => {
   }
 });
 
-app.get("/users", authenticateAdmin, async (req, res) => {
+app.get("/users", authenticateAdmin, async (req, res) => {              //Admin can view users
   try {
     const result = await pool.query("SELECT user_id, name, email, role FROM users");
     res.json(result.rows);
@@ -309,7 +320,7 @@ app.get("/users", authenticateAdmin, async (req, res) => {
   }
 });
 
-app.get("/homepage-stats", async (req, res) => {
+app.get("/homepage-stats", async (req, res) => {                    //Homepage stats updates as cases have been reported, new volunteer, etc,etc
   try {
     const totalReports = await pool.query("SELECT COUNT(*) FROM persons");
     const foundPeople = await pool.query("SELECT COUNT(*) FROM persons WHERE status = 'Resolved'");
@@ -327,7 +338,7 @@ app.get("/homepage-stats", async (req, res) => {
 });
 
 
-app.get("/recent-cases", async (req, res) => {
+app.get("/recent-cases", async (req, res) => {              //3 Recent Cases will be shown in the widget or compact view
   try {
     const result = await pool.query(
       `SELECT id, name, last_seen, image 
@@ -343,7 +354,7 @@ app.get("/recent-cases", async (req, res) => {
 });
 
 
-app.get("/homepage-recent-cases", async (req, res) => {
+app.get("/homepage-recent-cases", async (req, res) => {               //6 Recent Cases will be shown on the homepage
   try {
     const recent = await pool.query(`
       SELECT id, name, last_seen, date, image
@@ -358,7 +369,7 @@ app.get("/homepage-recent-cases", async (req, res) => {
   }
 });
 
-app.put("/profile", authenticateUser, async (req, res) => {
+app.put("/profile", authenticateUser, async (req, res) => {           //Can update existing account's email, password, and name
   try {
     const userId = req.user.user_id;
     const { name, email, password } = req.body;
@@ -385,14 +396,14 @@ app.put("/profile", authenticateUser, async (req, res) => {
 });
 
 
-const sendOTPEmail = require("./utils/sendOTPEmail");
+const sendOTPEmail = require("./utils/sendOTPEmail");           //Sends 6 digit code to registered emails
 
 app.post("/send-otp", async (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ error: "Email is required" });
 
-  const otp = Math.floor(100000 + Math.random() * 900000); // 6-digit OTP
-  const expiresAt = Date.now() + 5 * 60 * 1000; // expires in 5 min
+  const otp = Math.floor(100000 + Math.random() * 900000); 
+  const expiresAt = Date.now() + 5 * 60 * 1000; // The code expire in 5 minutes
 
   try {
     await sendOTPEmail(email, otp);
@@ -404,7 +415,7 @@ app.post("/send-otp", async (req, res) => {
   }
 });
 
-app.post("/verify-otp", (req, res) => {
+app.post("/verify-otp", (req, res) => {                         //Will send you to page to type your 6 digit-code
   const { email, otp } = req.body;
   const record = otpStore.get(email);
 
@@ -412,15 +423,15 @@ app.post("/verify-otp", (req, res) => {
   if (Date.now() > record.expiresAt) return res.status(400).json({ error: "OTP expired" });
   if (record.otp.toString() !== otp.toString()) return res.status(400).json({ error: "Invalid OTP" });
 
-  otpStore.delete(email); // ✅ Clear after successful verification
+  otpStore.delete(email); 
   res.json({ message: "OTP verified successfully" });
 });
 
 
-// Store OTPs temporarily in-memory
-const loginOtps = {};
 
-app.post("/send-login-otp", async (req, res) => {
+const loginOtps = {};                                       
+
+app.post("/send-login-otp", async (req, res) => {                       //The code is sent to emails
   const { email } = req.body;
   if (!email) return res.status(400).json({ error: "Email is required." });
 
@@ -430,7 +441,7 @@ app.post("/send-login-otp", async (req, res) => {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   loginOtps[email] = otp;
 
-  // Setup Nodemailer (reuse your existing transporter)
+  
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
@@ -449,13 +460,13 @@ app.post("/send-login-otp", async (req, res) => {
   res.json({ message: "OTP sent to email." });
 });
 
-app.post("/verify-login-otp", async (req, res) => {
+app.post("/verify-login-otp", async (req, res) => {                       //It'll verify the code and once it's accepted, it'll direct you to the homepage.
   const { email, otp } = req.body;
   if (!otp || !email) return res.status(400).json({ error: "Missing email or OTP." });
 
   if (loginOtps[email] !== otp) return res.status(400).json({ error: "Invalid OTP." });
 
-  // Cleanup OTP after successful verification
+  
   delete loginOtps[email];
 
   const user = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
@@ -476,8 +487,7 @@ const transporter = nodemailer.createTransport({
 
 
 
-
-app.use("/tips", tipRoutes);
+app.use("/tips", tipRoutes);                        //Connects routes to different page like AI page , alert page, etc
 app.use("/", aiRoutes);
 app.use("/", alertRoutes);
 

@@ -1,16 +1,16 @@
 const express = require("express");
 const pool = require("../config/db");
-const authenticateToken = require("../middleware/authMiddleware"); // Ensure this path matches your setup
+const authenticateToken = require("../middleware/authMiddleware"); 
 
 const router = express.Router();
 
-// GET /alerts - Fetch alerts relevant to the logged-in user (role-based or user-specific)
-router.get("/alerts", authenticateToken, async (req, res) => {
+
+router.get("/alerts", authenticateToken, async (req, res) => {                      //Make sures that the user logs in based on their role
   const userId = req.user.id;
   const userRole = req.user.role;
 
   try {
-    const result = await pool.query(
+    const result = await pool.query(      
       `SELECT alerts.*, persons.name AS person_name
        FROM alerts
        LEFT JOIN persons ON alerts.related_person_id = persons.id
@@ -26,8 +26,8 @@ router.get("/alerts", authenticateToken, async (req, res) => {
   }
 });
 
-// PUT /alerts/:id/seen - Mark a specific alert as seen
-router.put("/alerts/:id/seen", authenticateToken, async (req, res) => {
+
+router.put("/alerts/:id/seen", authenticateToken, async (req, res) => {       //Mark alerts as seen in the Alert window
   const alertId = req.params.id;
 
   try {
@@ -47,8 +47,8 @@ router.put("/alerts/:id/seen", authenticateToken, async (req, res) => {
   }
 });
 
-// GET /alerts/unseen-count - Get number of unseen alerts for logged-in user
-router.get("/alerts/unseen-count", authenticateToken, async (req, res) => {
+
+router.get("/alerts/unseen-count", authenticateToken, async (req, res) => {       //On the Navigation bar, it'll show how mamy alerts have not been seen.
   const userId = req.user.id;
   const userRole = req.user.role;
 

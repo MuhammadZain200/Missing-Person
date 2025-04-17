@@ -1,3 +1,6 @@
+// Manages and adjust roles for each account accessible by admins only
+//Displays accounts in a table witha  drop down menu to change their roles.
+
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
@@ -35,7 +38,7 @@ const ManageUsers = () => {
       fetchUsers();
     } catch (err) {
       console.error("Role update failed:", err);
-      setError("❌ Failed to update role.");
+      setError("Failed to update role.");
     }
   };
 

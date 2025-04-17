@@ -1,3 +1,7 @@
+// Verif TOP code during login
+// After it's successful, it redirects to the acounts dashboard based on their role
+// Sends error message if failed or not matched
+
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -42,7 +46,7 @@ const OTPVerification = () => {
 
       const { token, role, user } = res.data;
 
-      // Finalize login
+      
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
       localStorage.setItem("role", role);

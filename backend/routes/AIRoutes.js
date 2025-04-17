@@ -19,7 +19,7 @@ router.post("/ai-search", upload.single("file"), async (req, res) => {          
   
     const imagePath = path.join(__dirname, "..", req.file.path);              //Goes to the "file.path"  in this case uploads
   
-    //Console logs start here
+   
     console.log("File uploaded:", req.file.filename);
     console.log("Will forward to Python:", imagePath);
   

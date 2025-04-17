@@ -16,3 +16,5 @@ function authenticateUser(req, res, next) {
 }
 
 module.exports = authenticateUser;
+
+//JWT Toekn checks whhether it's valid or not in the Authorization heaader. If it's valid, it'll work otherwise it wont.

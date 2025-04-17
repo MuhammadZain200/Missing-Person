@@ -1,3 +1,7 @@
+//Navbar shows different routes like AI-Search, View Reports, etc
+// Shows different dashboard based on users role
+//Updates route changes every 15 seconds
+
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
@@ -82,9 +86,9 @@ const Navbar = () => {
             <Link to="/report">Report</Link>
             <Link to="/reports">View Reports</Link>
 
-            {/* ✅ New: My Profile Link */}
+            {/*New: My Profile Link */}
             <Link to="/profile" className="font-medium hover:underline">
-              My Profile
+              Profile
             </Link>
 
             <button

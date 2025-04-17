@@ -1,5 +1,5 @@
-// auth.js
+// Checks if user is logged in by verifying if token exists in the local storage
 export const isAuthenticated = () => {
-    return !!localStorage.getItem("token");   //Checks if user is loggined in with JWT Token in localStorage
+    return !!localStorage.getItem("token");   
   };
   

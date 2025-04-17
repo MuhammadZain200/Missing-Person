@@ -1,10 +1,13 @@
-// components/LocationPicker.jsx
+// Reusable map component using Leaflet
+//Marks the location when entered
+// Flies to provide latitude and longitude coordinates.
+
 import React, { useEffect } from "react";
 import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
-// Fix default icon
+
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconUrl: "https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon.png",

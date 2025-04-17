@@ -1,3 +1,5 @@
+//Not used in the current layout as optimal vertical navigation bar is being used.
+
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 

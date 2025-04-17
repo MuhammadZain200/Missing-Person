@@ -1,10 +1,12 @@
-// src/components/MapLocation.jsx
+// Reads the input given by the user using Leaftlet
+// - To display it on the map (e.g last seen)
+
 import React from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
-// Fix icon issue with Leaflet + Vite/Webpack
+
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",

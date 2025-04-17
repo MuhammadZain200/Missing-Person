@@ -51,7 +51,7 @@ const ViewReports = () => {
       );
     } catch (err) {
       console.error("Failed to update status:", err);
-      alert("❌ Failed to update status. Please try again.");
+      alert(" Failed to update status. Please try again.");
     }
   };
 
@@ -65,6 +65,24 @@ const ViewReports = () => {
 
     return matchesSearch && matchesStatus;
   });
+
+  const handleDelete = async (id, name) => {
+    const confirmDelete = window.confirm(`Are you sure you want to delete the case for ${name}?`);
+    if (!confirmDelete) return;
+  
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(`http://localhost:5000/persons/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+  
+      setReports((prev) => prev.filter((r) => r.id !== id));
+    } catch (err) {
+      console.error("Failed to delete report:", err);
+      alert(" Failed to delete the case.");
+    }
+  };
+  
 
   return (
     <div className="p-6 max-w-7xl mx-auto mt-10">
@@ -108,11 +126,16 @@ const ViewReports = () => {
               >
                 {report.image && (
                   <img
-                    src={`http://localhost:5000/uploads/${report.image}`}
+                    src={
+                      report.image.startsWith("http")
+                        ? report.image
+                        : `http://localhost:5000/uploads/${report.image}`
+                    }
                     alt={report.name}
                     className="h-48 w-full object-cover rounded mb-2"
                   />
                 )}
+
 
                 <h3 className="text-xl font-semibold">{report.name}</h3>
                 <p className="text-gray-600 text-sm">Age: {report.age}</p>
@@ -144,19 +167,27 @@ const ViewReports = () => {
               </Link>
 
               {role === "admin" && (
-                <div className="mt-3">
-                  <label className="text-sm font-medium">Update Status:</label>
+                <div className="mt-3 space-y-2">
+                  <label className="text-sm font-medium block">Update Status:</label>
                   <select
                     value={report.status || "Missing"}
                     onChange={(e) => handleStatusChange(report.id, e.target.value)}
-                    className="w-full mt-1 p-2 border rounded"
+                    className="w-full p-2 border rounded"
                   >
                     <option value="Missing">Missing</option>
                     <option value="Under Investigation">Under Investigation</option>
                     <option value="Resolved">Resolved</option>
                   </select>
+
+                  <button
+                    onClick={() => handleDelete(report.id, report.name)}
+                    className="w-full text-sm bg-red-600 text-white py-2 px-3 rounded hover:bg-red-700"
+                  >
+                    Delete Report
+                  </button>
                 </div>
               )}
+
             </div>
           ))}
         </div>

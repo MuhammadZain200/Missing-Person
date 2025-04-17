@@ -1,3 +1,6 @@
+//Layout wrapper for the app
+//Renders all the navbar except login and register
+
 import React from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import Navbar from "./Navbar";

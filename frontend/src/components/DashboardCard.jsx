@@ -1,3 +1,5 @@
+// Resuable component for showing dashboard metrics like Police,User, Admin, Volunteer, etc.
+
 import React from "react";
 import { Link } from "react-router-dom";
 

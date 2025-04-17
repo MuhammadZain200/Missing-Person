@@ -28,9 +28,9 @@ const Profile = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      setMessage("✅ Profile updated successfully");
+      setMessage("Profile updated successfully");
       localStorage.setItem("user", JSON.stringify(res.data.user));
-      setPassword(""); // reset password field
+      setPassword(""); 
     } catch (err) {
       console.error(err);
       setError(err.response?.data?.error || "Update failed.");

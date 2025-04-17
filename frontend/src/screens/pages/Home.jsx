@@ -108,13 +108,18 @@ const Home = () => {
               >
                 {person.image ? (
                   <img
-                    src={`http://localhost:5000/uploads/${person.image}`}
+                    src={
+                      person.image.startsWith("http")
+                        ? person.image
+                        : `http://localhost:5000/uploads/${person.image}`
+                    }
                     alt={person.name}
                     className="w-full h-40 object-cover rounded mb-4"
                   />
                 ) : (
                   <div className="bg-gray-200 h-40 mb-4 rounded" />
                 )}
+
                 <h3 className="font-semibold text-lg">{person.name}</h3>
                 <p className="text-sm text-gray-500">Last seen: {person.last_seen}</p>
               </Link>

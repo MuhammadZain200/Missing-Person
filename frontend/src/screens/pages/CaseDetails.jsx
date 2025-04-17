@@ -139,7 +139,11 @@ const CaseDetails = () => {
 
       {report.image && (
         <img
-          src={`http://localhost:5000/uploads/${report.image}`}
+          src={
+            report.image.startsWith("http")
+              ? report.image
+              : `http://localhost:5000/uploads/${report.image}`
+          }
           alt={report.name}
           className="w-full h-80 object-cover rounded mb-4"
         />

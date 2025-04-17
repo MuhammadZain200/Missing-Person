@@ -1,3 +1,5 @@
+//Route that is only shown to those accounts with administrative privileges
+
 import React from "react";
 import { Navigate } from "react-router-dom";
 
